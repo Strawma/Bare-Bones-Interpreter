@@ -10,7 +10,6 @@ public class BBVariable {
   public void clear() {
     this.value = 0;
   }
-
   public void addValue(int x) {
     this.value+=x;
   }
