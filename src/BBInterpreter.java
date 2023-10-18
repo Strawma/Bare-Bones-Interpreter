@@ -1,22 +1,26 @@
 import java.awt.FileDialog;
 import java.awt.Frame;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Stack;
 
+/**
+ * Interprets Barebones code from a text file.
+ */
 public class BBInterpreter {
 
-  enum Method {
-    CLEAR, INCR, DECR, WHILE, END
+  // Barebones Methods explained:
+  // clear x: sets the variable x to 0
+  // incr x: adds 1 to the variable x
+  // decr x: subtracts 1 from the variable x
+  // while x not 0 do: starts a while loop that will run until the variable x is 0
+  // end: ends a while loop
+
+  enum Method { // enum for BB methods
+    CLEAR, INCR, DECR, WHILE, END, ERROR
   }
 
   public static void main(String[] args) {
@@ -24,51 +28,37 @@ public class BBInterpreter {
 
     //lets user choose a text file from downloads
     final String DEFAULTPATH = System.getProperty("user.home") + "\\Downloads";
-    FileDialog dialog = new FileDialog((Frame)null, "Select a Text File to Interpret");
+    FileDialog dialog = new FileDialog((Frame) null, "Select a Text File to Interpret");
     dialog.setFile("*.txt");
     dialog.setDirectory(DEFAULTPATH);
     dialog.setMode(FileDialog.LOAD);
     dialog.setVisible(true);
-    String fileName = dialog.getDirectory()+"\\"+dialog.getFile();
+    String fileName = dialog.getDirectory() + "\\" + dialog.getFile();
     dialog.dispose();
     System.out.println(fileName);
 
-    String code = "";
+    String code;
     try {
       code = Files.readString(Path.of(fileName));
       System.out.println(code);
+      System.out.println();
+      interpreter.InterpretCode(code);
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      System.out.println("Error: File not found.");
     }
-
-/*    String code = "clear X;\n"
-        + "incr X;\n"
-        + "incr X;\n"
-        + "clear Y;\n"
-        + "incr Y;\n"
-        + "incr Y;\n"
-        + "incr Y;\n"
-        + "clear Z;\n"
-        + "while X not 0 do;\n"
-        + "   clear W;\n"
-        + "   while Y not 0 do;\n"
-        + "      incr Z;\n"
-        + "      incr W;\n"
-        + "      decr Y;\n"
-        + "   end;\n"
-        + "   while W not 0 do;\n"
-        + "      incr Y;\n"
-        + "      decr W;\n"
-        + "   end;\n"
-        + "   decr X;\n"
-        + "end;";*/
-    interpreter.InterpretCode(code);
   }
 
-  private List<BBVariable> variables = new ArrayList<BBVariable>(); // list of variables
-  private Stack<Integer> whileStack = new Stack<Integer>(); // stack for while loops
+  private List<BBVariable> variables; // list of variables
+  private Stack<Integer> whileStack; // stack for while loops
 
+  /**
+   * Interprets the code from a String.
+   *
+   * @param code the String to interpret
+   */
   public void InterpretCode(String code) { // interprets the code
+    variables = new ArrayList<>(); // creates new list of variables
+    whileStack = new Stack<>(); // creates new stack for while loops
     code = code.replaceAll(" +", " "); // removes extra spaces
     code = code.replaceAll("\n", ""); // removes line breaks
     String[] lines = code.split(";"); // splits the code into lines
@@ -81,30 +71,36 @@ public class BBInterpreter {
 
   private int interpretLine(String[] lines, int lineNum) { //reads a single line
     String[] words = lines[lineNum].trim().split(" "); // splits the line into words
-    if (words.length == 2) {
-      if (words[0].equals("clear")) {
+    Method method = getMethodFromWords(words); // gets the method from the words
+    switch (method) { // interprets the method
+      case CLEAR -> { // if the method is clear, clear the variable
         clear(words[1]);
         return lineNum + 1;
-      } else if (words[0].equals("incr")) {
+      }
+      case INCR -> { // if the method is incr, add 1 to the variable
         addValue(words[1], 1);
         return lineNum + 1;
-      } else if (words[0].equals("decr")) {
+      }
+      case DECR -> { // if the method is decr, subtract 1 from the variable
         addValue(words[1], -1);
         return lineNum + 1;
       }
-    } else if (words.length == 5 && words[0].equals("while")
-        && words[2].equals("not") && words[4].equals("do")) {
-      BBVariable variable = ensureExists(words[1]);
-      if (variable.getValue() != Integer.parseInt(words[3])) {
-        whileStack.push(lineNum);
-        return lineNum + 1;
-      } else {
-        return skipToEnd(lines, lineNum+1);
+      case WHILE -> { // if the method is while, check if the variable is equal to the value
+        BBVariable variable = ensureExists(words[1]);
+        if (variable.getValue() != Integer.parseInt(
+            words[3])) { // variable not equal to the value, skip to the end of the loop
+          whileStack.push(lineNum);
+          return lineNum + 1;
+        } else { // variable is equal to the value, skip to the end of the while loop
+          return skipToEnd(lines, lineNum + 1);
+        }
       }
-    } else if (words.length == 1 && words[0].equals("end") && !whileStack.isEmpty()) {
-      return whileStack.pop();
+      case END -> {
+        if (!whileStack.isEmpty()) {
+          return whileStack.pop();
+        }
+      }
     }
-
     System.out.println("Error: Invalid line number " + lineNum + ".");
     return -1;
   }
@@ -123,15 +119,14 @@ public class BBInterpreter {
     int whileCount = 1;
     while (whileCount > 0) { // while there are still while loops to go through
       String[] words = lines[lineNum].trim().split(" "); // splits the line into words
-      if (words.length == 5 && words[0].equals("while") && words[2].equals("not")
-          && words[4].equals("do")) { // if a while loop is reached
-        whileCount++;
-      } else if (words.length == 1 && words[0].equals(
-          "end")) { // if the end of a while loop is reached
-        whileCount--;
-      } else if (words.length != 2 || (!words[0].equals("clear") && !words[0].equals("incr")
-          && !words[0].equals("decr"))) {
-        return -1; // if the line is not a valid line, return the line number to process error
+      Method method = getMethodFromWords(words); // gets the method from the words
+      switch (method) {
+        case WHILE -> whileCount++;
+        case END -> whileCount--;
+        case ERROR -> {
+          System.out.println("Error: Invalid line number " + lineNum + ".");
+          return -1;
+        }
       }
       lineNum++;
     }
@@ -150,10 +145,54 @@ public class BBInterpreter {
     return variable;
   }
 
+  private boolean validVariableName(String variableName) { // checks if a variable name is valid
+    if (!Character.isJavaIdentifierPart(variableName.charAt(0))) {
+      return false; // if the first character is not a valid character, return false
+    }
+    for (int i = 1; i < variableName.length(); i++) {
+      if (!Character.isJavaIdentifierPart(variableName.charAt(i))) {
+        return false; // if any other character is not a valid character, return false
+      }
+    }
+    return true; // if all characters are valid, return true
+  }
+
   private void printVariables() { // prints the variables
     for (BBVariable variable : variables) {
       System.out.print(variable.getName() + ": " + variable.getValue() + " ");
     }
     System.out.println();
+  }
+
+  private boolean isInteger(String input) { // checks if a string is an integer
+    try {
+      Integer.parseInt(input);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  private Method getMethodFromWords(String[] words) { // gets the BB method from words in a line
+    if (words.length == 2 && validVariableName(words[1])) {
+      switch (words[0]) { //checks for clear, incr, and decr methods
+        case "clear" -> {
+          return Method.CLEAR;
+        }
+        case "incr" -> {
+          return Method.INCR;
+        }
+        case "decr" -> {
+          return Method.DECR;
+        }
+      }
+    } else if (words.length == 5 && words[0].equals("while")
+        && words[2].equals("not") && words[4].equals("do") && validVariableName(words[1])
+        && isInteger(words[3])) { //checks for while method
+      return Method.WHILE;
+    } else if (words.length == 1 && words[0].equals("end")) { //checks for end method
+      return Method.END;
+    }
+    return Method.ERROR; // if the line is not valid, return error
   }
 }

@@ -1,5 +1,9 @@
+/**
+ * Represents a variable in the Barebones program.
+ */
 public class BBVariable {
-  private String name;
+
+  private final String name;
   private int value;
 
   public BBVariable(String name) {
@@ -10,8 +14,14 @@ public class BBVariable {
   public void clear() {
     this.value = 0;
   }
+
+  /**
+   * Adds a value to the variable.
+   *
+   * @param x the value to add
+   */
   public void addValue(int x) {
-    this.value+=x;
+    this.value += x;
   }
 
   public String getName() {
