@@ -1,3 +1,12 @@
+import java.awt.FileDialog;
+import java.awt.Frame;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -6,9 +15,33 @@ import java.util.Stack;
 
 public class BBInterpreter {
 
+  enum Method {
+    CLEAR, INCR, DECR, WHILE, END
+  }
+
   public static void main(String[] args) {
     BBInterpreter interpreter = new BBInterpreter();
-    String code = "clear X;\n"
+
+    //lets user choose a text file from downloads
+    final String DEFAULTPATH = System.getProperty("user.home") + "\\Downloads";
+    FileDialog dialog = new FileDialog((Frame)null, "Select a Text File to Interpret");
+    dialog.setFile("*.txt");
+    dialog.setDirectory(DEFAULTPATH);
+    dialog.setMode(FileDialog.LOAD);
+    dialog.setVisible(true);
+    String fileName = dialog.getDirectory()+"\\"+dialog.getFile();
+    dialog.dispose();
+    System.out.println(fileName);
+
+    String code = "";
+    try {
+      code = Files.readString(Path.of(fileName));
+      System.out.println(code);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+/*    String code = "clear X;\n"
         + "incr X;\n"
         + "incr X;\n"
         + "clear Y;\n"
@@ -28,7 +61,7 @@ public class BBInterpreter {
         + "      decr W;\n"
         + "   end;\n"
         + "   decr X;\n"
-        + "end;";
+        + "end;";*/
     interpreter.InterpretCode(code);
   }
 
