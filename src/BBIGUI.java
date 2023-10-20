@@ -29,6 +29,8 @@ public class BBIGUI extends JFrame {
   private JTextArea output;
   private JMenu fileMenu;
   private JButton runButton;
+  private JButton stopButton;
+  private Thread interpreterThread;
 
   public BBIGUI() {
     interpreter = new BBInterpreter(); // creates a new interpreter
@@ -90,19 +92,28 @@ public class BBIGUI extends JFrame {
     runButton = new JButton("Run Code"); //creates a button to run code
     runButton.addActionListener(e -> {
       interpreter.setCode(input.getText());
-      new Thread (() -> { //runs the code on a new thread, prevents GUI from freezing
-        fileMenu.setEnabled(false);
-        runButton.setEnabled(false);
+      interpreterThread = new Thread (() -> { //runs the code on a new thread, prevents GUI from freezing
+        toggleComponents();
         output.setText("Running...");
         output.setText(interpreter.InterpretCode());
-        fileMenu.setEnabled(true);
-        runButton.setEnabled(true);
-      }).start();
+        toggleComponents();
+      });
+      interpreterThread.start();
     });
+
+    stopButton = new JButton("Stop"); //creates a button to stop code
+    stopButton.addActionListener(e -> {
+      interpreterThread.interrupt();
+      toggleComponents();
+      output.setText("Stopped.");
+    });
+    stopButton.setVisible(false);
+
 
     menuBar.add(fileMenu);
     menuBar.add(spacing);
     menuBar.add(runButton);
+    menuBar.add(stopButton);
 
     gbc.fill = GridBagConstraints.HORIZONTAL;
     gbc.gridx = 0;
@@ -147,5 +158,12 @@ public class BBIGUI extends JFrame {
     gbc.weighty = 1;
     gbc.weightx = 1;
     panel.add(scrollPane, gbc);
+  }
+
+  private void toggleComponents() { //toggles certain components when running code
+    fileMenu.setEnabled(!fileMenu.isEnabled());
+    runButton.setVisible(!runButton.isVisible());
+    input.setEnabled(!input.isEnabled());
+    stopButton.setVisible(!stopButton.isVisible());
   }
 }
