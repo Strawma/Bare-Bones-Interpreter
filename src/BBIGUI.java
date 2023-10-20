@@ -12,6 +12,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+/**
+ * GUI for Bare Bones Interpreter
+ */
 public class BBIGUI extends JFrame {
 
   public static void main(String[] args) {
@@ -20,6 +23,7 @@ public class BBIGUI extends JFrame {
 
   private JTextArea input;
   private JTextArea output;
+
   public BBIGUI() {
     this.setTitle("Bare Bones Interpreter");
     this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -40,7 +44,7 @@ public class BBIGUI extends JFrame {
 
     createMenuBar(panel, gbc);
 
-    createTextArea(panel, gbc);
+    createInputArea(panel, gbc);
 
     createOutputArea(panel, gbc);
 
@@ -62,7 +66,7 @@ public class BBIGUI extends JFrame {
       }
     });
 
-    JButton runButton = new JButton("Run Code");
+    JButton runButton = new JButton("Run Code"); //creates a button to run code
     runButton.addActionListener(e -> {
       BBInterpreter interpreter = new BBInterpreter();
       output.setText(interpreter.InterpretCode(input.getText()));
@@ -81,7 +85,7 @@ public class BBIGUI extends JFrame {
     panel.add(menuBar, gbc);
   }
 
-  private void createTextArea(JPanel panel, GridBagConstraints gbc) {
+  private void createInputArea(JPanel panel, GridBagConstraints gbc) { //text area for code input
     JScrollPane scrollPane = new JScrollPane();
 
     input = new JTextArea();
@@ -97,7 +101,7 @@ public class BBIGUI extends JFrame {
     panel.add(scrollPane, gbc);
   }
 
-  private void createOutputArea(JPanel panel, GridBagConstraints gbc) {
+  private void createOutputArea(JPanel panel, GridBagConstraints gbc) { //text area for code output
     JScrollPane scrollPane = new JScrollPane();
 
     output = new JTextArea();

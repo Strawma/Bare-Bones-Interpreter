@@ -34,7 +34,7 @@ public class BBInterpreter {
     code = code.replaceAll("\n", ""); // removes line breaks
     String[] lines = code.split(";"); // splits the code into lines
     int lineNum = 1;
-    while (lineNum > 0 && lineNum < lines.length+1) { // for each line
+    while (lineNum > 0 && lineNum < lines.length + 1) { // for each line
       lineNum = interpretLine(lines, lineNum); // interpret the line
       output += (printVariables() + "\n"); // print the variables
     }
@@ -45,7 +45,7 @@ public class BBInterpreter {
   }
 
   private int interpretLine(String[] lines, int lineNum) { //reads a single line
-    String[] words = lines[lineNum-1].trim().split(" "); // splits the line into words
+    String[] words = lines[lineNum - 1].trim().split(" "); // splits the line into words
     Method method = getMethodFromWords(words); // gets the method from the words
     switch (method) { // interprets the method
       case CLEAR -> { // if the method is clear, clear the variable
@@ -95,7 +95,7 @@ public class BBInterpreter {
   private int skipToEnd(String[] lines, int lineNum) { // skips to the end of a while loop
     int whileCount = 1;
     while (whileCount > 0) { // while there are still while loops to go through
-      String[] words = lines[lineNum-1].trim().split(" "); // splits the line into words
+      String[] words = lines[lineNum - 1].trim().split(" "); // splits the line into words
       Method method = getMethodFromWords(words); // gets the method from the words
       switch (method) {
         case WHILE -> whileCount++;
