@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import javax.net.ssl.SSLEngineResult.Status;
 
 /**
  * Interprets Barebones code from a text file.
@@ -23,30 +24,15 @@ public class BBInterpreter {
     CLEAR, INCR, DECR, WHILE, END, ERROR
   }
 
-  public static void main(String[] args) {
-    BBInterpreter interpreter = new BBInterpreter();
-
     //lets user choose a text file from downloads
-    final String DEFAULTPATH = System.getProperty("user.home") + "\\Downloads";
-    FileDialog dialog = new FileDialog((Frame) null, "Select a Text File to Interpret");
-    dialog.setFile("*.txt");
-    dialog.setDirectory(DEFAULTPATH);
-    dialog.setMode(FileDialog.LOAD);
-    dialog.setVisible(true);
-    String fileName = dialog.getDirectory() + "\\" + dialog.getFile();
-    dialog.dispose();
-    System.out.println(fileName);
-
-    String code;
-    try {
-      code = Files.readString(Path.of(fileName));
-      System.out.println(code);
-      System.out.println();
-      interpreter.InterpretCode(code);
-    } catch (IOException e) {
-      System.out.println("Error: File not found.");
-    }
-  }
+//    FileDialog dialog = new FileDialog((Frame) null, "Select a Text File to Interpret");
+//    dialog.setFile("*.txt");
+//    dialog.setDirectory(System.getProperty("user.home") + "\\Downloads");
+//    dialog.setMode(FileDialog.LOAD);
+//    dialog.setVisible(true);
+//    String fileName = dialog.getDirectory() + "\\" + dialog.getFile();
+//    dialog.dispose();
+//    System.out.println(fileName);
 
   private List<BBVariable> variables; // list of variables
   private Stack<Integer> whileStack; // stack for while loops
@@ -56,7 +42,8 @@ public class BBInterpreter {
    *
    * @param code the String to interpret
    */
-  public void InterpretCode(String code) { // interprets the code
+  public String InterpretCode(String code) { // interprets the code
+    String output = "";
     variables = new ArrayList<>(); // creates new list of variables
     whileStack = new Stack<>(); // creates new stack for while loops
     code = code.replaceAll(" +", " "); // removes extra spaces
@@ -65,8 +52,12 @@ public class BBInterpreter {
     int lineNum = 0;
     while (lineNum > -1 && lineNum < lines.length) { // for each line
       lineNum = interpretLine(lines, lineNum); // interpret the line
-      printVariables(); // print the variables
+      output += (printVariables() + "\n"); // print the variables
     }
+    if (lineNum < 0) {
+      output += ("Error: Invalid line number " + -lineNum + ".");
+    }
+    return output;
   }
 
   private int interpretLine(String[] lines, int lineNum) { //reads a single line
@@ -101,8 +92,7 @@ public class BBInterpreter {
         }
       }
     }
-    System.out.println("Error: Invalid line number " + lineNum + ".");
-    return -1;
+    return -lineNum;
   }
 
   private void clear(String variableName) { // clears the value of a variable
@@ -124,8 +114,7 @@ public class BBInterpreter {
         case WHILE -> whileCount++;
         case END -> whileCount--;
         case ERROR -> {
-          System.out.println("Error: Invalid line number " + lineNum + ".");
-          return -1;
+          return -lineNum - 1;
         }
       }
       lineNum++;
@@ -157,11 +146,12 @@ public class BBInterpreter {
     return true; // if all characters are valid, return true
   }
 
-  private void printVariables() { // prints the variables
+  private String printVariables() { // prints the variables
+    String output = "";
     for (BBVariable variable : variables) {
-      System.out.print(variable.getName() + ": " + variable.getValue() + " ");
+      output += (variable.getName() + ": " + variable.getValue() + " ");
     }
-    System.out.println();
+    return output;
   }
 
   private boolean isInteger(String input) { // checks if a string is an integer
