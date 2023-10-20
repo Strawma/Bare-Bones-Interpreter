@@ -1,12 +1,6 @@
-import java.awt.FileDialog;
-import java.awt.Frame;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
-import javax.net.ssl.SSLEngineResult.Status;
 
 /**
  * Interprets Barebones code from a text file.
@@ -24,16 +18,6 @@ public class BBInterpreter {
     CLEAR, INCR, DECR, WHILE, END, ERROR
   }
 
-    //lets user choose a text file from downloads
-//    FileDialog dialog = new FileDialog((Frame) null, "Select a Text File to Interpret");
-//    dialog.setFile("*.txt");
-//    dialog.setDirectory(System.getProperty("user.home") + "\\Downloads");
-//    dialog.setMode(FileDialog.LOAD);
-//    dialog.setVisible(true);
-//    String fileName = dialog.getDirectory() + "\\" + dialog.getFile();
-//    dialog.dispose();
-//    System.out.println(fileName);
-
   private List<BBVariable> variables; // list of variables
   private Stack<Integer> whileStack; // stack for while loops
 
@@ -49,8 +33,8 @@ public class BBInterpreter {
     code = code.replaceAll(" +", " "); // removes extra spaces
     code = code.replaceAll("\n", ""); // removes line breaks
     String[] lines = code.split(";"); // splits the code into lines
-    int lineNum = 0;
-    while (lineNum > -1 && lineNum < lines.length) { // for each line
+    int lineNum = 1;
+    while (lineNum > 0 && lineNum < lines.length+1) { // for each line
       lineNum = interpretLine(lines, lineNum); // interpret the line
       output += (printVariables() + "\n"); // print the variables
     }
@@ -61,7 +45,7 @@ public class BBInterpreter {
   }
 
   private int interpretLine(String[] lines, int lineNum) { //reads a single line
-    String[] words = lines[lineNum].trim().split(" "); // splits the line into words
+    String[] words = lines[lineNum-1].trim().split(" "); // splits the line into words
     Method method = getMethodFromWords(words); // gets the method from the words
     switch (method) { // interprets the method
       case CLEAR -> { // if the method is clear, clear the variable
@@ -91,8 +75,11 @@ public class BBInterpreter {
           return whileStack.pop();
         }
       }
+      case ERROR -> {
+        return -lineNum;
+      }
     }
-    return -lineNum;
+    throw new RuntimeException("how?");
   }
 
   private void clear(String variableName) { // clears the value of a variable
@@ -108,13 +95,13 @@ public class BBInterpreter {
   private int skipToEnd(String[] lines, int lineNum) { // skips to the end of a while loop
     int whileCount = 1;
     while (whileCount > 0) { // while there are still while loops to go through
-      String[] words = lines[lineNum].trim().split(" "); // splits the line into words
+      String[] words = lines[lineNum-1].trim().split(" "); // splits the line into words
       Method method = getMethodFromWords(words); // gets the method from the words
       switch (method) {
         case WHILE -> whileCount++;
         case END -> whileCount--;
         case ERROR -> {
-          return -lineNum - 1;
+          return -lineNum;
         }
       }
       lineNum++;
