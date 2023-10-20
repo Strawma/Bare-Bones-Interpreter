@@ -27,6 +27,8 @@ public class BBIGUI extends JFrame {
   private final BBInterpreter interpreter;
   private JTextArea input;
   private JTextArea output;
+  private JMenu fileMenu;
+  private JButton runButton;
 
   public BBIGUI() {
     interpreter = new BBInterpreter(); // creates a new interpreter
@@ -60,7 +62,7 @@ public class BBIGUI extends JFrame {
       GridBagConstraints gbc) { //menu bar for opening files and running code
     JMenuBar menuBar = new JMenuBar();
 
-    JMenu fileMenu = new JMenu("File");
+    fileMenu = new JMenu("File");
 
     JMenuItem openButton = new JMenuItem("Open"); // creates a button to open a file
     openButton.addActionListener(e -> { // when the button is clicked
@@ -85,9 +87,17 @@ public class BBIGUI extends JFrame {
     JLabel spacing = new JLabel();
     spacing.setText("     ");
 
-    JButton runButton = new JButton("Run Code"); //creates a button to run code
+    runButton = new JButton("Run Code"); //creates a button to run code
     runButton.addActionListener(e -> {
-      output.setText(interpreter.InterpretCode(input.getText()));
+      interpreter.setCode(input.getText());
+      new Thread (() -> { //runs the code on a new thread, prevents GUI from freezing
+        fileMenu.setEnabled(false);
+        runButton.setEnabled(false);
+        output.setText("Running...");
+        output.setText(interpreter.InterpretCode());
+        fileMenu.setEnabled(true);
+        runButton.setEnabled(true);
+      }).start();
     });
 
     menuBar.add(fileMenu);
@@ -138,5 +148,4 @@ public class BBIGUI extends JFrame {
     gbc.weightx = 1;
     panel.add(scrollPane, gbc);
   }
-
 }

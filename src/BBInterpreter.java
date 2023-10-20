@@ -20,13 +20,13 @@ public class BBInterpreter {
 
   private List<BBVariable> variables; // list of variables
   private Stack<Integer> whileStack; // stack for while loops
+  private String code; // the code to interpret
 
   /**
    * Interprets the code from a String.
    *
-   * @param code the String to interpret
    */
-  public String InterpretCode(String code) { // interprets the code
+  public String InterpretCode() { // interprets code string
     String output = "";
     variables = new ArrayList<>(); // creates new list of variables
     whileStack = new Stack<>(); // creates new stack for while loops
@@ -171,5 +171,9 @@ public class BBInterpreter {
       return Method.END;
     }
     return Method.ERROR; // if the line is not valid, return error
+  }
+
+  public void setCode(String code) {
+    this.code = code;
   }
 }
