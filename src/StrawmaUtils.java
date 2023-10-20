@@ -1,6 +1,7 @@
 import java.awt.FileDialog;
 import java.awt.Frame;
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -22,7 +23,7 @@ public class StrawmaUtils { //collection of useful methods
     if (fileType != null) {
       dialog.setFile("*." + fileType);
     }
-    dialog.setDirectory(System.getProperty("user.home") + "\\Downloads");
+    dialog.setDirectory(defaultPath);
     dialog.setMode(FileDialog.LOAD);
     dialog.setVisible(true);
     return dialog.getDirectory() + "\\" + dialog.getFile();
@@ -39,6 +40,27 @@ public class StrawmaUtils { //collection of useful methods
 
   public static String getFileFromDialog(String dialogText, String defaultPath) {
     return getFileFromDialog(dialogText, defaultPath, null);
+  }
+
+  public static boolean saveFileUsingDialog(String fileText, String dialogText, String defaultPath,
+      String fileType) {
+    FileDialog dialog = new FileDialog((Frame) null, dialogText);
+    if (fileType != null) {
+      dialog.setFile("*." + fileType);
+    }
+    dialog.setDirectory(defaultPath);
+    dialog.setMode(FileDialog.SAVE);
+    dialog.setVisible(true);
+    String directory = dialog.getDirectory() + "\\" + dialog.getFile();
+
+    try {
+      FileWriter writer = new FileWriter(directory);
+      writer.write(fileText);
+      writer.close();
+    } catch (IOException e) {
+      return false;
+    }
+    return true;
   }
 
 

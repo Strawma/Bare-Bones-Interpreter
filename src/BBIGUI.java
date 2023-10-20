@@ -7,7 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -21,10 +24,12 @@ public class BBIGUI extends JFrame {
     new BBIGUI();
   }
 
+  private final BBInterpreter interpreter;
   private JTextArea input;
   private JTextArea output;
 
   public BBIGUI() {
+    interpreter = new BBInterpreter(); // creates a new interpreter
     this.setTitle("Bare Bones Interpreter");
     this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     JPanel panel = createPanel();
@@ -51,10 +56,13 @@ public class BBIGUI extends JFrame {
     return panel;
   }
 
-  private void createMenuBar(JPanel panel, GridBagConstraints gbc) {
+  private void createMenuBar(JPanel panel,
+      GridBagConstraints gbc) { //menu bar for opening files and running code
     JMenuBar menuBar = new JMenuBar();
 
-    JButton openButton = new JButton("Open File"); // creates a button to open a file
+    JMenu fileMenu = new JMenu("File");
+
+    JMenuItem openButton = new JMenuItem("Open"); // creates a button to open a file
     openButton.addActionListener(e -> { // when the button is clicked
       String fileName = StrawmaUtils.getFileFromDialog("Select a Text File to Interpret",
           System.getProperty("user.home") + "\\Downloads", "txt"); // lets the user choose a file
@@ -65,14 +73,25 @@ public class BBIGUI extends JFrame {
         throw new RuntimeException(ex);
       }
     });
+    JMenuItem saveAsButton = new JMenuItem("Save as"); // creates a button to save a file
+    saveAsButton.addActionListener(e -> {
+      StrawmaUtils.saveFileUsingDialog(input.getText(), "Save Output",
+          System.getProperty("user.home") + "\\Downloads", "txt");
+    });
+
+    fileMenu.add(openButton);
+    fileMenu.add(saveAsButton);
+
+    JLabel spacing = new JLabel();
+    spacing.setText("     ");
 
     JButton runButton = new JButton("Run Code"); //creates a button to run code
     runButton.addActionListener(e -> {
-      BBInterpreter interpreter = new BBInterpreter();
       output.setText(interpreter.InterpretCode(input.getText()));
     });
 
-    menuBar.add(openButton);
+    menuBar.add(fileMenu);
+    menuBar.add(spacing);
     menuBar.add(runButton);
 
     gbc.fill = GridBagConstraints.HORIZONTAL;
