@@ -1,6 +1,8 @@
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
+import javax.swing.JTextArea;
 
 /**
  * Interprets Barebones code from a text file.
@@ -14,9 +16,10 @@ public class BBInterpreter {
   // while x not 0 do: starts a while loop that will run until the variable x is 0
   // end: ends a while loop
 
-  enum Method { // enum for BB methods
+  private enum Method { // enum for BB methods
     CLEAR, INCR, DECR, WHILE, END, ERROR
   }
+  private record LineReturn(int line, boolean print) {} // represents the return of a line of code
 
   private List<BBVariable> variables; // list of variables
   private Stack<Integer> whileStack; // stack for while loops
@@ -26,8 +29,9 @@ public class BBInterpreter {
    * Interprets the code from a String.
    *
    */
-  public String InterpretCode() { // interprets code string
-    String output = "";
+  public void InterpretCode(JTextArea output) { // interprets code string
+    //String output = "";
+    output.setText("Running...\n\n");
     variables = new ArrayList<>(); // creates new list of variables
     whileStack = new Stack<>(); // creates new stack for while loops
     code = code.replaceAll(" +", " "); // removes extra spaces
@@ -35,48 +39,59 @@ public class BBInterpreter {
     String[] lines = code.split(";"); // splits the code into lines
     int lineNum = 1;
     while (lineNum > 0 && lineNum < lines.length + 1) { // for each line
-      lineNum = interpretLine(lines, lineNum); // interpret the line
-      output += (printVariables() + "\n"); // print the variables
+      LineReturn lineReturn = interpretLine(lines, lineNum);
+      lineNum = lineReturn.line; // interpret the line
+      if (lineReturn.print) output.setText(output.getText() + printVariables() + "\n");
+      //output += (printVariables() + "\n"); // print the variables
     }
     if (lineNum < 0) {
-      output += ("Error: Invalid line number " + -lineNum + ".");
+      //output += ("Error: Invalid line number " + -lineNum + ".");
+      output.setText(output.getText() + "\nError: Invalid line number " + -lineNum + ".");
     }
-    return output;
+    else {
+      //output += ("Finished.");
+      output.setText(output.getText() + "\nFinished.");
+    }
   }
 
-  private int interpretLine(String[] lines, int lineNum) { //reads a single line
+  private LineReturn interpretLine(String[] lines, int lineNum) { //reads a single line
+    try {
+      TimeUnit.MILLISECONDS.sleep(5);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
     String[] words = lines[lineNum - 1].trim().split(" "); // splits the line into words
     Method method = getMethodFromWords(words); // gets the method from the words
     switch (method) { // interprets the method
       case CLEAR -> { // if the method is clear, clear the variable
         clear(words[1]);
-        return lineNum + 1;
+        return new LineReturn(lineNum+1, true);
       }
       case INCR -> { // if the method is incr, add 1 to the variable
         addValue(words[1], 1);
-        return lineNum + 1;
+        return new LineReturn(lineNum+1, true);
       }
       case DECR -> { // if the method is decr, subtract 1 from the variable
         addValue(words[1], -1);
-        return lineNum + 1;
+        return new LineReturn(lineNum+1, true);
       }
       case WHILE -> { // if the method is while, check if the variable is equal to the value
         BBVariable variable = ensureExists(words[1]);
         if (variable.getValue() != Integer.parseInt(
             words[3])) { // variable not equal to the value, skip to the end of the loop
           whileStack.push(lineNum);
-          return lineNum + 1;
+          return new LineReturn(lineNum+1, false);
         } else { // variable is equal to the value, skip to the end of the while loop
           return skipToEnd(lines, lineNum + 1);
         }
       }
       case END -> {
         if (!whileStack.isEmpty()) {
-          return whileStack.pop();
+          return new LineReturn(whileStack.pop(), false);
         }
       }
       case ERROR -> {
-        return -lineNum;
+        return new LineReturn(-lineNum, false);
       }
     }
     throw new RuntimeException("how?");
@@ -92,7 +107,7 @@ public class BBInterpreter {
     variable.addValue(x);
   }
 
-  private int skipToEnd(String[] lines, int lineNum) { // skips to the end of a while loop
+  private LineReturn skipToEnd(String[] lines, int lineNum) { // skips to the end of a while loop
     int whileCount = 1;
     while (whileCount > 0) { // while there are still while loops to go through
       String[] words = lines[lineNum - 1].trim().split(" "); // splits the line into words
@@ -101,12 +116,12 @@ public class BBInterpreter {
         case WHILE -> whileCount++;
         case END -> whileCount--;
         case ERROR -> {
-          return -lineNum;
+          return new LineReturn(-lineNum, false);
         }
       }
       lineNum++;
     }
-    return lineNum; // if the while loop is valid, return the line number to continue
+    return new LineReturn(lineNum, false); // if the while loop is valid, return the line number to continue
   }
 
   private BBVariable ensureExists(String variableName) { // ensures that a variable exists

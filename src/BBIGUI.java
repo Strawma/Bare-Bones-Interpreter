@@ -94,8 +94,9 @@ public class BBIGUI extends JFrame {
       interpreter.setCode(input.getText());
       interpreterThread = new Thread (() -> { //runs the code on a new thread, prevents GUI from freezing
         toggleComponents();
-        output.setText("Running...");
-        output.setText(interpreter.InterpretCode());
+        //output.setText("Running...");
+        //output.setText(interpreter.InterpretCode());
+        interpreter.InterpretCode(output);
         toggleComponents();
       });
       interpreterThread.start();
