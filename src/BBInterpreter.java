@@ -30,7 +30,6 @@ public class BBInterpreter {
    *
    */
   public void InterpretCode(JTextArea output) { // interprets code string
-    //String output = "";
     output.setText("Running...\n\n");
     variables = new ArrayList<>(); // creates new list of variables
     whileStack = new Stack<>(); // creates new stack for while loops
@@ -42,14 +41,11 @@ public class BBInterpreter {
       LineReturn lineReturn = interpretLine(lines, lineNum);
       lineNum = lineReturn.line; // interpret the line
       if (lineReturn.print) output.setText(output.getText() + printVariables() + "\n");
-      //output += (printVariables() + "\n"); // print the variables
     }
     if (lineNum < 0) {
-      //output += ("Error: Invalid line number " + -lineNum + ".");
       output.setText(output.getText() + "\nError: Invalid line number " + -lineNum + ".");
     }
     else {
-      //output += ("Finished.");
       output.setText(output.getText() + "\nFinished.");
     }
   }
